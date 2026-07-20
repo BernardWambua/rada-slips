@@ -1,0 +1,204 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- CORE IDENTITY ---
+
+model Tipster {
+  id           String     @id @default(uuid())
+  phoneNumber  String     @unique // Format: +2547XXXXXXXX — also used as login username
+  passwordHash String
+  displayName  String?
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+
+  wallet    Wallet?
+  campaigns Campaign[]
+  slips     Slip[]
+
+  @@map("tipsters")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+// --- BOOKMAKERS ---
+
+model Bookmaker {
+  id            String  @id @default(uuid())
+  slug          String  @unique // BETIKA, BETKUMI, SPORTPESA
+  name          String
+  websiteUrl    String
+  licenseNumber String
+  supportPhone  String
+  urlTemplate   String? // e.g. https://www.betika.com/en-ke/share/{code}
+  isActive      Boolean @default(true)
+
+  campaigns       Campaign[]
+  slips           Slip[]
+  commissionRates CommissionRate[]
+
+  @@map("bookmakers")
+}
+
+// --- CAMPAIGNS (optional slip grouping) ---
+
+model Campaign {
+  id          String         @id @default(uuid())
+  tipsterId   String
+  tipster     Tipster        @relation(fields: [tipsterId], references: [id])
+  bookmakerId String
+  bookmaker   Bookmaker      @relation(fields: [bookmakerId], references: [id])
+  title       String
+  description String?
+  status      CampaignStatus @default(ACTIVE)
+  createdAt   DateTime       @default(now())
+
+  slips Slip[]
+
+  @@index([tipsterId])
+  @@map("campaigns")
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+// --- COMMISSION CONFIG ---
+
+model CommissionRate {
+  id              String     @id @default(uuid())
+  bookmakerId     String?
+  bookmaker       Bookmaker? @relation(fields: [bookmakerId], references: [id])
+  slipType        SlipType
+  perClickAmount  Decimal    @default(0.00) @db.Decimal(10, 4) // KES per click
+  betVolumeRate   Decimal    @default(0.00) @db.Decimal(5, 4) // e.g. 0.0200 = 2%
+  tipsterShare    Decimal    @default(0.70) @db.Decimal(3, 2) // 70% to tipster
+  isActive        Boolean    @default(true)
+  effectiveFrom   DateTime   @default(now())
+
+  @@unique([bookmakerId, slipType])
+  @@map("commission_rates")
+}
+
+// --- FINANCIAL LEDGER ---
+
+model Wallet {
+  id             String   @id @default(uuid())
+  tipsterId      String   @unique
+  tipster        Tipster  @relation(fields: [tipsterId], references: [id])
+  availableFunds Decimal  @default(0.00) @db.Decimal(12, 2)
+  escrowFunds    Decimal  @default(0.00) @db.Decimal(12, 2)
+  updatedAt      DateTime @updatedAt
+
+  transactions Transaction[]
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id                 String            @id @default(uuid())
+  walletId           String
+  wallet             Wallet            @relation(fields: [walletId], references: [id])
+  amount             Decimal           @db.Decimal(12, 2)
+  type               TransactionType
+  status             TransactionStatus @default(SUCCESSFUL)
+  mpesaReceiptNumber String?           @unique
+  metadata           Json?
+  createdAt          DateTime          @default(now())
+
+  @@map("transactions")
+}
+
+enum TransactionType {
+  COMMISSION_INFLOW
+  WITHDRAWAL_OUTFLOW
+  REVERSAL
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+}
+
+// --- SLIP & SIGNAL ENGINE ---
+
+model Slip {
+  id           String     @id @default(uuid())
+  tipsterId    String
+  tipster      Tipster    @relation(fields: [tipsterId], references: [id])
+  bookmakerId  String
+  bookmaker    Bookmaker  @relation(fields: [bookmakerId], references: [id])
+  campaignId   String?
+  campaign     Campaign?  @relation(fields: [campaignId], references: [id])
+  type         SlipType   @default(SPORTS_SLIP)
+  slug         String     @unique
+  bookingCode  String?
+  signalNotes  String?
+  targetUrl    String
+  totalOdds    Decimal?   @db.Decimal(8, 2)
+  status       SlipStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+
+  clicks      ClickLog[]
+  conversions ConversionLog[]
+
+  @@index([slug])
+  @@index([tipsterId])
+  @@map("slips")
+}
+
+enum SlipType {
+  SPORTS_SLIP
+  CRASH_SIGNAL
+}
+
+enum SlipStatus {
+  PENDING
+  WON
+  LOST
+  VOIDED
+}
+
+// --- ANALYTICS ---
+
+model ClickLog {
+  id                String   @id @default(uuid())
+  slipId            String
+  slip              Slip     @relation(fields: [slipId], references: [id])
+  ipAddress         String?
+  userAgent         String?
+  gatewayAccepted   Boolean  @default(false)
+  commissionAmount  Decimal? @db.Decimal(12, 4)
+  timestamp         DateTime @default(now())
+
+  @@index([slipId, timestamp])
+  @@map("click_logs")
+}
+
+model ConversionLog {
+  id               String   @id @default(uuid())
+  slipId           String
+  slip             Slip     @relation(fields: [slipId], references: [id])
+  betAmount        Decimal  @db.Decimal(12, 2)
+  externalRef      String?
+  commissionAmount Decimal? @db.Decimal(12, 4)
+  metadata         Json?
+  timestamp        DateTime @default(now())
+
+  @@index([slipId, timestamp])
+  @@map("conversion_logs")
+}
