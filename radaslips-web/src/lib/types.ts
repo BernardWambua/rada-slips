@@ -63,7 +63,7 @@ export interface Slip {
   shareUrl: string;
   bookmaker: { slug: string; name: string };
   campaign: { id: string; title: string } | null;
-  _count: { clicks: number; conversions: number };
+  _count?: { clicks: number; conversions: number };
 }
 
 export interface AnalyticsOverview {

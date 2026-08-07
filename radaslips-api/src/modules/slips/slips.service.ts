@@ -77,6 +77,7 @@ export class SlipsService {
           },
         },
         campaign: { select: { id: true, title: true } },
+        _count: { select: { clicks: true, conversions: true } },
       },
     });
 

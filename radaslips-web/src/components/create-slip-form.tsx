@@ -6,6 +6,7 @@ import type { Bookmaker, Slip, SlipType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { ShareLinkPanel } from '@/components/share-link-panel';
 
 export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void }) {
   const [bookmakers, setBookmakers] = useState<Bookmaker[]>([]);
@@ -17,6 +18,7 @@ export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void 
   const [totalOdds, setTotalOdds] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [createdSlip, setCreatedSlip] = useState<Slip | null>(null);
 
   useEffect(() => {
     listBookmakers()
@@ -46,6 +48,7 @@ export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void 
       setSignalNotes('');
       setSlugPrefix('');
       setTotalOdds('');
+      setCreatedSlip(slip);
       onCreated(slip);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to create slip');
@@ -54,8 +57,39 @@ export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void 
     }
   }
 
+  function startAnother() {
+    setCreatedSlip(null);
+    setError('');
+  }
+
+  if (createdSlip) {
+    return (
+      <Card title="Link ready to share">
+        <ShareLinkPanel shareUrl={createdSlip.shareUrl} autoCopy />
+        <div className="mt-4 flex flex-wrap gap-2 text-sm text-zinc-400">
+          <span>{createdSlip.bookmaker.name}</span>
+          <span>·</span>
+          <span>{createdSlip.type.replace('_', ' ')}</span>
+          {createdSlip.bookingCode ? (
+            <>
+              <span>·</span>
+              <span className="font-mono text-zinc-300">{createdSlip.bookingCode}</span>
+            </>
+          ) : null}
+        </div>
+        <Button type="button" variant="secondary" className="mt-6 w-full" onClick={startAnother}>
+          Create another link
+        </Button>
+      </Card>
+    );
+  }
+
   return (
-    <Card title="Create slip">
+    <Card title="Create share link">
+      <p className="mb-4 text-sm text-zinc-400">
+        Paste your booking code or signal — we generate a trackable link you can
+        drop straight into WhatsApp.
+      </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-zinc-200">Bookmaker</span>
@@ -132,7 +166,7 @@ export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void 
         ) : null}
 
         <Button type="submit" disabled={loading || !bookmakerId} className="w-full">
-          {loading ? 'Creating…' : 'Generate share link'}
+          {loading ? 'Generating link…' : 'Generate share link'}
         </Button>
       </form>
     </Card>

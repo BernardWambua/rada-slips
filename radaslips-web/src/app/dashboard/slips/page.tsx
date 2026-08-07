@@ -27,7 +27,7 @@ export default function SlipsPage() {
       <div>
         <h1 className="text-3xl font-semibold text-zinc-50">Slips</h1>
         <p className="mt-2 text-zinc-400">
-          Generate trackable links for sports slips and crash signals.
+          Every slip becomes a trackable share link for WhatsApp and Telegram.
         </p>
       </div>
 
