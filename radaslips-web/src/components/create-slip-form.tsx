@@ -35,7 +35,6 @@ export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void 
     try {
       const slip = await createSlip({
         bookmakerId,
-        type: 'SPORTS_SLIP',
         bookingCode,
         slugPrefix: slugPrefix || undefined,
         totalOdds: totalOdds ? Number(totalOdds) : undefined,

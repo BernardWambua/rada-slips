@@ -6,14 +6,11 @@ import { ApiError, getMe, getOverview } from '@/lib/api';
 import type { AnalyticsOverview, Tipster } from '@/lib/types';
 import { formatDate, formatKes } from '@/lib/format';
 import { Card } from '@/components/ui/card';
-import { WithdrawalPanel } from '@/components/withdrawal-panel';
 
 export default function DashboardPage() {
   const [tipster, setTipster] = useState<Tipster | null>(null);
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [error, setError] = useState('');
-
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     Promise.all([getMe(), getOverview()])
@@ -24,11 +21,7 @@ export default function DashboardPage() {
       .catch((err) => {
         setError(err instanceof ApiError ? err.message : 'Failed to load dashboard');
       });
-  }, [refreshKey]);
-
-  function refreshDashboard() {
-    setRefreshKey((value) => value + 1);
-  }
+  }, []);
 
   if (error) {
     return (
@@ -63,14 +56,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[24rem_1fr]">
-        <WithdrawalPanel
-          availableBalance={overview.wallet?.availableFunds ?? '0'}
-          defaultPhoneNumber={tipster.phoneNumber}
-          onWithdrawn={refreshDashboard}
-        />
-
-        <Card title="Recent slip links">
+      <Card title="Recent slip links">
         {overview.recentSlips.length === 0 ? (
           <p className="text-sm text-zinc-400">
             No slips yet.{' '}
@@ -104,8 +90,7 @@ export default function DashboardPage() {
             </table>
           </div>
         )}
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 }

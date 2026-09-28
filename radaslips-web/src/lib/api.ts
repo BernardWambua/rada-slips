@@ -4,11 +4,6 @@ import type {
   AuthResponse,
   Bookmaker,
   CreateSlipPayload,
-  MpesaIntegrationStatus,
-  MpesaPayout,
-  LeaderboardPeriod,
-  LeaderboardResponse,
-  LeaderboardSortBy,
   ResolvedSlip,
   Slip,
   Tipster,
@@ -123,43 +118,6 @@ export async function listSlips(): Promise<Slip[]> {
 
 export async function getOverview(): Promise<AnalyticsOverview> {
   return request<AnalyticsOverview>('/analytics/overview', {}, true);
-}
-
-export async function getLeaderboard(params?: {
-  period?: LeaderboardPeriod;
-  sortBy?: LeaderboardSortBy;
-  limit?: number;
-}): Promise<LeaderboardResponse> {
-  const search = new URLSearchParams();
-  if (params?.period) search.set('period', params.period);
-  if (params?.sortBy) search.set('sortBy', params.sortBy);
-  if (params?.limit) search.set('limit', String(params.limit));
-
-  const query = search.toString();
-  return request<LeaderboardResponse>(
-    `/analytics/leaderboard${query ? `?${query}` : ''}`,
-    {},
-    true,
-  );
-}
-
-export async function getMpesaStatus(): Promise<MpesaIntegrationStatus> {
-  return request<MpesaIntegrationStatus>('/mpesa/status');
-}
-
-export async function listMpesaWithdrawals(): Promise<MpesaPayout[]> {
-  return request<MpesaPayout[]>('/mpesa/withdrawals', {}, true);
-}
-
-export async function requestMpesaWithdrawal(payload: {
-  amount: number;
-  phoneNumber?: string;
-}): Promise<MpesaPayout> {
-  return request<MpesaPayout>(
-    '/mpesa/withdrawals',
-    { method: 'POST', body: JSON.stringify(payload) },
-    true,
-  );
 }
 
 export function getApiUrl(): string {

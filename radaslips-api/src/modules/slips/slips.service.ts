@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SlipType } from '@prisma/client';
 import { generateSlug } from '../../common/utils/slug.util';
 import { PrismaService } from '../../core/prisma.service';
 import { RedisService } from '../../core/redis.service';
@@ -28,25 +27,11 @@ export class SlipsService {
       throw new NotFoundException('Bookmaker not found');
     }
 
-    if (dto.campaignId) {
-      const campaign = await this.prisma.campaign.findUnique({
-        where: { id: dto.campaignId },
-      });
-
-      if (!campaign || campaign.tipsterId !== tipsterId) {
-        throw new ForbiddenException('Invalid campaign');
-      }
-
-      if (campaign.bookmakerId !== bookmaker.id) {
-        throw new BadRequestException(
-          'Campaign bookmaker must match slip bookmaker',
-        );
-      }
+    if (!dto.targetUrl && !bookmaker.urlTemplate) {
+      throw new BadRequestException(
+        'targetUrl is required when bookmaker has no URL template',
+      );
     }
-
-    const slipType = dto.type ?? SlipType.SPORTS_SLIP;
-
-    this.validateSlipPayload({ ...dto, type: slipType }, bookmaker.urlTemplate);
 
     const slug = generateSlug(dto.slugPrefix);
     const targetUrl = this.buildTargetUrl(
@@ -61,11 +46,8 @@ export class SlipsService {
       data: {
         tipsterId,
         bookmakerId: bookmaker.id,
-        campaignId: dto.campaignId,
-        type: slipType,
         slug,
         bookingCode: dto.bookingCode,
-        signalNotes: dto.signalNotes,
         targetUrl,
         totalOdds: dto.totalOdds,
       },
@@ -78,7 +60,6 @@ export class SlipsService {
             supportPhone: true,
           },
         },
-        campaign: { select: { id: true, title: true } },
         _count: { select: { clicks: true, conversions: true } },
       },
     });
@@ -97,7 +78,6 @@ export class SlipsService {
       orderBy: { createdAt: 'desc' },
       include: {
         bookmaker: { select: { slug: true, name: true } },
-        campaign: { select: { id: true, title: true } },
         _count: { select: { clicks: true, conversions: true } },
       },
     });
@@ -113,7 +93,6 @@ export class SlipsService {
       where: { id: slipId },
       include: {
         bookmaker: true,
-        campaign: { select: { id: true, title: true } },
         _count: { select: { clicks: true, conversions: true } },
       },
     });
@@ -183,10 +162,8 @@ export class SlipsService {
 
     return {
       slug: slip.slug,
-      type: slip.type,
       targetUrl: slip.targetUrl,
       bookingCode: slip.bookingCode,
-      signalNotes: slip.signalNotes,
       totalOdds: slip.totalOdds,
       bookmaker: slip.bookmaker,
       compliance: {
@@ -205,41 +182,10 @@ export class SlipsService {
     await this.redis.set(`${SLIP_CACHE_PREFIX}${slug}`, JSON.stringify(resolved));
   }
 
-  private validateSlipPayload(
-    dto: CreateSlipDto,
-    urlTemplate: string | null,
-  ) {
-    if (dto.type === SlipType.SPORTS_SLIP && !dto.bookingCode) {
-      throw new BadRequestException(
-        'bookingCode is required for sports slips',
-      );
-    }
-
-    if (dto.type === SlipType.CRASH_SIGNAL && !dto.signalNotes) {
-      throw new BadRequestException(
-        'signalNotes are required for crash signals',
-      );
-    }
-
-    if (!dto.targetUrl && !urlTemplate && dto.type === SlipType.SPORTS_SLIP) {
-      throw new BadRequestException(
-        'targetUrl is required when bookmaker has no URL template',
-      );
-    }
-
-    if (
-      dto.type === SlipType.CRASH_SIGNAL &&
-      !dto.targetUrl &&
-      !urlTemplate
-    ) {
-      // Crash signals fall back to bookmaker homepage
-    }
-  }
-
   private buildTargetUrl(
     websiteUrl: string,
     urlTemplate: string | null,
-    bookingCode: string | undefined,
+    bookingCode: string,
     explicitTargetUrl: string | undefined,
     slug: string,
   ): string {
@@ -247,7 +193,7 @@ export class SlipsService {
 
     if (explicitTargetUrl) {
       baseUrl = explicitTargetUrl;
-    } else if (urlTemplate && bookingCode) {
+    } else if (urlTemplate) {
       baseUrl = urlTemplate.replace('{code}', bookingCode);
     } else {
       baseUrl = websiteUrl;
