@@ -85,10 +85,63 @@ export interface AnalyticsOverview {
 
 export interface CreateSlipPayload {
   bookmakerId: string;
-  type: SlipType;
-  bookingCode?: string;
-  signalNotes?: string;
+  type?: SlipType;
+  bookingCode: string;
   targetUrl?: string;
   totalOdds?: number;
   slugPrefix?: string;
+}
+
+export type MpesaPayoutStatus =
+  | 'PENDING'
+  | 'QUEUED'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'REVERSED';
+
+export interface MpesaPayout {
+  id: string;
+  phoneNumber: string;
+  amount: string;
+  platformFee: string;
+  netAmount: string;
+  status: MpesaPayoutStatus;
+  mpesaReceiptNumber: string | null;
+  resultDesc: string | null;
+  createdAt: string;
+}
+
+export interface MpesaIntegrationStatus {
+  mode: 'mock' | 'live';
+  environment: string;
+  b2cReady: boolean;
+  stkReady: boolean;
+  withdrawalMinAmount: number;
+  withdrawalFeeRate: number;
+  notes: string;
+}
+
+export type LeaderboardPeriod = '7d' | '30d' | 'all';
+export type LeaderboardSortBy = 'clicks' | 'conversions' | 'earnings';
+
+export interface LeaderboardEntry {
+  rank: number;
+  tipsterId: string;
+  name: string;
+  slipCount: number;
+  clickCount: number;
+  conversionCount: number;
+  totalEarnings: string;
+}
+
+export interface LeaderboardResponse {
+  period: LeaderboardPeriod;
+  sortBy: LeaderboardSortBy;
+  entries: LeaderboardEntry[];
+  viewer: {
+    rank: number;
+    entry: LeaderboardEntry;
+  } | null;
+  updatedAt: string;
 }

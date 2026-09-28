@@ -44,7 +44,9 @@ export class SlipsService {
       }
     }
 
-    this.validateSlipPayload(dto, bookmaker.urlTemplate);
+    const slipType = dto.type ?? SlipType.SPORTS_SLIP;
+
+    this.validateSlipPayload({ ...dto, type: slipType }, bookmaker.urlTemplate);
 
     const slug = generateSlug(dto.slugPrefix);
     const targetUrl = this.buildTargetUrl(
@@ -60,7 +62,7 @@ export class SlipsService {
         tipsterId,
         bookmakerId: bookmaker.id,
         campaignId: dto.campaignId,
-        type: dto.type,
+        type: slipType,
         slug,
         bookingCode: dto.bookingCode,
         signalNotes: dto.signalNotes,
@@ -147,7 +149,7 @@ export class SlipsService {
 
   async listBookmakers() {
     return this.prisma.bookmaker.findMany({
-      where: { isActive: true },
+      where: { isActive: true, urlTemplate: { not: null } },
       select: {
         id: true,
         slug: true,

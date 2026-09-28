@@ -18,8 +18,9 @@ export class CreateSlipDto {
   @IsUUID()
   campaignId?: string;
 
+  @IsOptional()
   @IsEnum(SlipType)
-  type: SlipType;
+  type?: SlipType;
 
   @ValidateIf((dto: CreateSlipDto) => dto.type === SlipType.SPORTS_SLIP)
   @IsString()

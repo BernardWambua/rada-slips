@@ -61,7 +61,7 @@ export function ShareLinkPanel({
     >
       {!compact ? (
         <div>
-          <p className="text-sm font-medium text-emerald-200">Shareable link</p>
+          <p className="text-sm font-medium text-emerald-200">Slip link</p>
           <p className="mt-1 text-xs text-emerald-100/70">
             {autoCopy && copied
               ? 'Copied to clipboard — paste it in WhatsApp or Telegram.'

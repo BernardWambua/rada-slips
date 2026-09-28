@@ -42,6 +42,9 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-jwt-secret-change-in-production
       CORS_ORIGIN: http://localhost:3001
+      API_PUBLIC_URL: http://localhost:5000
+      DARAJA_MOCK_MODE: "true"
+      DARAJA_ENVIRONMENT: sandbox
       CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ./radaslips-api:/app

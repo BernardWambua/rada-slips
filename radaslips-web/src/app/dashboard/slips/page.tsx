@@ -25,9 +25,9 @@ export default function SlipsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold text-zinc-50">Slips</h1>
+        <h1 className="text-3xl font-semibold text-zinc-50">Slip links</h1>
         <p className="mt-2 text-zinc-400">
-          Every slip becomes a trackable share link for WhatsApp and Telegram.
+          Turn booking codes into trackable slip links for WhatsApp and Telegram.
         </p>
       </div>
 

@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { AnalyticsService } from './analytics.service';
 import { RecordClickDto } from './dto/record-click.dto';
 import { RecordConversionDto } from './dto/record-conversion.dto';
+import { LeaderboardQueryDto } from './dto/leaderboard-query.dto';
 
 @Controller('analytics')
 export class AnalyticsController {
@@ -45,6 +47,15 @@ export class AnalyticsController {
   @UseGuards(JwtAuthGuard)
   overview(@CurrentTipster() tipster: { id: string }) {
     return this.analyticsService.tipsterOverview(tipster.id);
+  }
+
+  @Get('leaderboard')
+  @UseGuards(JwtAuthGuard)
+  leaderboard(
+    @Query() query: LeaderboardQueryDto,
+    @CurrentTipster() tipster: { id: string },
+  ) {
+    return this.analyticsService.getLeaderboard(query, tipster.id);
   }
 
   @Get('slips/:slipId')

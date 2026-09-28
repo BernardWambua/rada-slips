@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 
 const links = [
   { href: '/dashboard', label: 'Overview' },
-  { href: '/dashboard/slips', label: 'Slips' },
+  { href: '/dashboard/slips', label: 'Slip links' },
+  { href: '/dashboard/leaderboard', label: 'Leaderboard' },
 ];
 
 export function DashboardNav() {

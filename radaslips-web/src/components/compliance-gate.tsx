@@ -32,9 +32,10 @@ export function ComplianceGate({ slip }: { slip: ResolvedSlip }) {
           </p>
         ) : null}
 
-        {slip.signalNotes ? (
-          <p className="mt-4 rounded-lg bg-zinc-900 p-3 text-sm text-zinc-300">
-            {slip.signalNotes}
+        {slip.totalOdds ? (
+          <p className="mt-2 text-sm text-zinc-400">
+            Total odds:{' '}
+            <span className="font-medium text-zinc-200">{slip.totalOdds}x</span>
           </p>
         ) : null}
 

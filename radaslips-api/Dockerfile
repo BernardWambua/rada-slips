@@ -1,9 +1,11 @@
 FROM node:22-alpine AS development
 
+RUN apk add --no-cache openssl libc6-compat
+
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install -g npm@11 && npm ci
 
 COPY prisma ./prisma
 COPY prisma.config.ts ./

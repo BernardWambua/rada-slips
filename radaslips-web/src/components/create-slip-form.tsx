@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { ApiError, createSlip, listBookmakers } from '@/lib/api';
-import type { Bookmaker, Slip, SlipType } from '@/lib/types';
+import type { Bookmaker, Slip } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -11,9 +11,7 @@ import { ShareLinkPanel } from '@/components/share-link-panel';
 export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void }) {
   const [bookmakers, setBookmakers] = useState<Bookmaker[]>([]);
   const [bookmakerId, setBookmakerId] = useState('');
-  const [type, setType] = useState<SlipType>('SPORTS_SLIP');
   const [bookingCode, setBookingCode] = useState('');
-  const [signalNotes, setSignalNotes] = useState('');
   const [slugPrefix, setSlugPrefix] = useState('');
   const [totalOdds, setTotalOdds] = useState('');
   const [error, setError] = useState('');
@@ -37,21 +35,19 @@ export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void 
     try {
       const slip = await createSlip({
         bookmakerId,
-        type,
-        bookingCode: type === 'SPORTS_SLIP' ? bookingCode : undefined,
-        signalNotes: type === 'CRASH_SIGNAL' ? signalNotes : undefined,
+        type: 'SPORTS_SLIP',
+        bookingCode,
         slugPrefix: slugPrefix || undefined,
         totalOdds: totalOdds ? Number(totalOdds) : undefined,
       });
 
       setBookingCode('');
-      setSignalNotes('');
       setSlugPrefix('');
       setTotalOdds('');
       setCreatedSlip(slip);
       onCreated(slip);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to create slip');
+      setError(err instanceof ApiError ? err.message : 'Failed to create slip link');
     } finally {
       setLoading(false);
     }
@@ -64,31 +60,35 @@ export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void 
 
   if (createdSlip) {
     return (
-      <Card title="Link ready to share">
+      <Card title="Slip link ready">
         <ShareLinkPanel shareUrl={createdSlip.shareUrl} autoCopy />
         <div className="mt-4 flex flex-wrap gap-2 text-sm text-zinc-400">
           <span>{createdSlip.bookmaker.name}</span>
-          <span>·</span>
-          <span>{createdSlip.type.replace('_', ' ')}</span>
           {createdSlip.bookingCode ? (
             <>
               <span>·</span>
               <span className="font-mono text-zinc-300">{createdSlip.bookingCode}</span>
             </>
           ) : null}
+          {createdSlip.totalOdds ? (
+            <>
+              <span>·</span>
+              <span>{createdSlip.totalOdds}x odds</span>
+            </>
+          ) : null}
         </div>
         <Button type="button" variant="secondary" className="mt-6 w-full" onClick={startAnother}>
-          Create another link
+          Create another slip link
         </Button>
       </Card>
     );
   }
 
   return (
-    <Card title="Create share link">
+    <Card title="Create slip link">
       <p className="mb-4 text-sm text-zinc-400">
-        Paste your booking code or signal — we generate a trackable link you can
-        drop straight into WhatsApp.
+        Paste a bookmaker booking code and we generate a trackable slip link you
+        can drop straight into WhatsApp.
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block space-y-1.5">
@@ -106,39 +106,13 @@ export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void 
           </select>
         </label>
 
-        <label className="block space-y-1.5">
-          <span className="text-sm font-medium text-zinc-200">Slip type</span>
-          <select
-            value={type}
-            onChange={(event) => setType(event.target.value as SlipType)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-emerald-500"
-          >
-            <option value="SPORTS_SLIP">Sports slip (booking code)</option>
-            <option value="CRASH_SIGNAL">Crash signal</option>
-          </select>
-        </label>
-
-        {type === 'SPORTS_SLIP' ? (
-          <Input
-            label="Booking code"
-            value={bookingCode}
-            onChange={(event) => setBookingCode(event.target.value)}
-            placeholder="e.g. ABC123"
-            required
-          />
-        ) : (
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-zinc-200">Signal notes</span>
-            <textarea
-              value={signalNotes}
-              onChange={(event) => setSignalNotes(event.target.value)}
-              required
-              rows={3}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-emerald-500"
-              placeholder="Cash out at 2.5x..."
-            />
-          </label>
-        )}
+        <Input
+          label="Booking code"
+          value={bookingCode}
+          onChange={(event) => setBookingCode(event.target.value)}
+          placeholder="e.g. ABC123"
+          required
+        />
 
         <Input
           label="Custom slug prefix (optional)"
@@ -148,16 +122,15 @@ export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void 
           hint="Creates links like /r/fly-kamau-a1b2c3d4"
         />
 
-        {type === 'SPORTS_SLIP' ? (
-          <Input
-            label="Total odds (optional)"
-            type="number"
-            step="0.01"
-            min="1"
-            value={totalOdds}
-            onChange={(event) => setTotalOdds(event.target.value)}
-          />
-        ) : null}
+        <Input
+          label="Total odds (optional)"
+          type="number"
+          step="0.01"
+          min="1"
+          value={totalOdds}
+          onChange={(event) => setTotalOdds(event.target.value)}
+          hint="Shown on the compliance gate when followers open your link."
+        />
 
         {error ? (
           <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
@@ -166,7 +139,7 @@ export function CreateSlipForm({ onCreated }: { onCreated: (slip: Slip) => void 
         ) : null}
 
         <Button type="submit" disabled={loading || !bookmakerId} className="w-full">
-          {loading ? 'Generating link…' : 'Generate share link'}
+          {loading ? 'Generating slip link…' : 'Generate slip link'}
         </Button>
       </form>
     </Card>

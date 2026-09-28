@@ -23,6 +23,7 @@ const BOOKMAKERS = [
     licenseNumber: '0000000',
     supportPhone: '+254700000000',
     urlTemplate: null,
+    isActive: false,
   },
   {
     slug: 'SPORTPESA',
@@ -71,7 +72,7 @@ async function main() {
         licenseNumber: bookmaker.licenseNumber,
         supportPhone: bookmaker.supportPhone,
         urlTemplate: bookmaker.urlTemplate,
-        isActive: true,
+        isActive: 'isActive' in bookmaker ? bookmaker.isActive : true,
       },
     });
   }

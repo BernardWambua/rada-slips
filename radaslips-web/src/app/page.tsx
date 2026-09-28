@@ -25,12 +25,12 @@ export default function HomePage() {
             Dark social slip links
           </p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-zinc-50 sm:text-6xl">
-            Turn WhatsApp tips into trackable, compliant betting links.
+            Turn WhatsApp slips into trackable, compliant slip links.
           </h1>
           <p className="mt-6 text-lg leading-8 text-zinc-400">
-            RadaSlips wraps bookmaker booking codes and affiliate URLs into
-            shareable links with built-in compliance gates, click tracking, and
-            tipster commission wallets.
+            RadaSlips wraps bookmaker booking codes into shareable slip links
+            with built-in compliance gates, click tracking, and tipster
+            commission wallets.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
             <Link href="/register">
@@ -44,8 +44,8 @@ export default function HomePage() {
 
         <section className="mt-24 grid gap-6 md:grid-cols-3">
           <Feature
-            title="Trackable links"
-            body="Every slip gets a unique slug like /r/fly-kamau so you know exactly who drove the traffic."
+            title="Trackable slip links"
+            body="Every booking code gets a unique slug like /r/fly-kamau so you know exactly who drove the traffic."
           />
           <Feature
             title="Compliance built in"
