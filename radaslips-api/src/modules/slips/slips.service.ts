@@ -5,6 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { generateSlug } from '../../common/utils/slug.util';
+import {
+  buildTargetUrl,
+  InvalidTargetUrlError,
+} from '../../common/utils/target-url.util';
 import { PrismaService } from '../../core/prisma.service';
 import { RedisService } from '../../core/redis.service';
 import { CreateSlipDto } from './dto/create-slip.dto';
@@ -34,13 +38,20 @@ export class SlipsService {
     }
 
     const slug = generateSlug(dto.slugPrefix);
-    const targetUrl = this.buildTargetUrl(
-      bookmaker.websiteUrl,
-      bookmaker.urlTemplate,
-      dto.bookingCode,
-      dto.targetUrl,
-      slug,
-    );
+    let targetUrl: string;
+    try {
+      targetUrl = buildTargetUrl(
+        bookmaker,
+        dto.bookingCode,
+        slug,
+        dto.targetUrl,
+      );
+    } catch (error) {
+      if (error instanceof InvalidTargetUrlError) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
 
     const slip = await this.prisma.slip.create({
       data: {
@@ -180,29 +191,6 @@ export class SlipsService {
   private async cacheResolvedSlip(slug: string) {
     const resolved = await this.loadResolvedSlip(slug);
     await this.redis.set(`${SLIP_CACHE_PREFIX}${slug}`, JSON.stringify(resolved));
-  }
-
-  private buildTargetUrl(
-    websiteUrl: string,
-    urlTemplate: string | null,
-    bookingCode: string,
-    explicitTargetUrl: string | undefined,
-    slug: string,
-  ): string {
-    let baseUrl: string;
-
-    if (explicitTargetUrl) {
-      baseUrl = explicitTargetUrl;
-    } else if (urlTemplate) {
-      baseUrl = urlTemplate.replace('{code}', bookingCode);
-    } else {
-      baseUrl = websiteUrl;
-    }
-
-    const url = new URL(baseUrl);
-    url.searchParams.set('ref', 'radaslips');
-    url.searchParams.set('slip', slug);
-    return url.toString();
   }
 
   private buildShareUrl(slug: string) {

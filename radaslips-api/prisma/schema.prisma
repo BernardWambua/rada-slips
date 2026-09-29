@@ -34,14 +34,18 @@ enum UserStatus {
 // --- BOOKMAKERS ---
 
 model Bookmaker {
-  id            String  @id @default(uuid())
-  slug          String  @unique // BETIKA, BETKUMI, SPORTPESA
-  name          String
-  websiteUrl    String
-  licenseNumber String
-  supportPhone  String
-  urlTemplate   String? // e.g. https://www.betika.com/en-ke/share/{code}
-  isActive      Boolean @default(true)
+  id             String  @id @default(uuid())
+  slug           String  @unique // BETIKA, BETKUMI, SPORTPESA
+  name           String
+  websiteUrl     String
+  licenseNumber  String
+  supportPhone   String
+  urlTemplate    String? // e.g. https://www.betika.com/en-ke/share/{code}
+  // Affiliate tracking, from the bookmaker's affiliate programme
+  affiliateParam String? // query param carrying our affiliate ID, e.g. btag
+  affiliateId    String?
+  subIdParam     String? // query param the slip slug goes in, e.g. subid
+  isActive       Boolean @default(true)
 
   slips           Slip[]
   commissionRates CommissionRate[]
